@@ -114,14 +114,9 @@ def shorten_filename(fname, md5sum, expire):
     return host + encoded_string
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/' + SECRET_KEY + '/', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
-        # check secret key
-        if request.form['secret_key'] and \
-           request.form['secret_key'] != SECRET_KEY:
-            return 'wrong key'  # FIXME: throw error and isset
-        
         # check if the post request has the file part
         if 'file' not in request.files:
             return 'no file part'
