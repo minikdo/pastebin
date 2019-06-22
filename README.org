@@ -1,0 +1,9 @@
+* Pastebin
+
+Uploads a file to your www server and returns a shortened link.
+
+** Install
+
+virtualenv -p python3 .venv
+
+python3 app.py
