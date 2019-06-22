@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+FILE=$1
+EXPIRE=$2
+URL=http://localhost:5000/
+
+curl -X POST -F file=@${FILE} \
+     -F expire=${EXPIRE} \
+     -F secret_key=${MY_PASTEBIN_KEY} \
+     ${URL}
+
+echo
