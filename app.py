@@ -151,10 +151,11 @@ def upload_file():
             # rename tmp file
             os.rename(filename, new_fname)
 
-            if request.form['expire']:
-                days = int(request.form['expire'])
-            else:
+            days = request.form.get('expire', 1)
+            if days == '':
                 days = 1
+            else:
+                days = int(days)
 
             # calculate expiration time
             from datetime import datetime, timedelta

@@ -23,10 +23,11 @@ fi
 
 FILE=$1
 EXPIRE=$2
+TMPFILE=
 URL=http://localhost:5000/
 
 if [ -p /dev/stdin ]; then
-    TMPFILE=/tmp/$(mktemp publish.XXXXXXX)
+    TMPFILE=$(mktemp -p /tmp publish.XXXXXXX)
     
     while IFS= read line; do
         echo ${line} >> $TMPFILE
@@ -39,8 +40,8 @@ curl -X POST -F file=@${FILE} \
      -F expire=${EXPIRE} \
      ${URL}${MY_PASTEBIN_KEY}/
 
-if [ -e $TMPFILE ]; then
-   rm $TMPFILE
+if [ -p /dev/stdin ] && [ -e $TMPFILE ]; then
+    rm $TMPFILE
 fi
    
 echo
