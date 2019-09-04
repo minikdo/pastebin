@@ -6,8 +6,12 @@ from db import DB
 
 
 def remove_file(md5sum):
-    os.remove(os.path.join('uploads', md5sum))
-    db.query("DELETE FROM file WHERE md5sum = '{}'".format(md5sum))
+    try:
+        os.remove(os.path.join('uploads', md5sum))
+    except FileNotFoundError as e:
+        print(e)
+    else:
+        db.query("DELETE FROM file WHERE md5sum = '{}'".format(md5sum))
 
     
 def expired():
