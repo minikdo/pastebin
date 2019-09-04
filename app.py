@@ -19,6 +19,8 @@ BASE_DIR = '/'
 DEBUG = True
 PORT = 5000
 
+db = DB("pastebin.db")
+
 
 with open('secrets.json') as f:
     """ parse configuration file """
