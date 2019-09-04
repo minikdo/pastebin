@@ -10,15 +10,16 @@ def remove_file(md5sum):
         os.remove(os.path.join('uploads', md5sum))
     except FileNotFoundError as e:
         print(e)
-    else:
+    finally:
         db.query("DELETE FROM file WHERE md5sum = '{}'".format(md5sum))
 
     
 def expired():
-    res = db.query('SELECT md5sum FROM file WHERE expire > {}'.format(now))
+    res = db.query('SELECT md5sum FROM file WHERE expire < {}'.format(now))
     rows = res.fetchall()
     
     for row in rows:
+        print(row[0])
         remove_file(row[0])
             
     return True
