@@ -19,7 +19,7 @@ BASE_DIR = '/'
 DEBUG = True
 PORT = 5000
 
-db = DB("pastebin.db")
+db = DB("pastebin.db")  # FIXME
 
 
 with open('secrets.json') as f:
@@ -56,6 +56,9 @@ def table_check():
         db.query(create_table)
     except OperationalError:
         pass
+
+
+table_check()  # FIXME
 
 
 def toBase62(num, b=62):
