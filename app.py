@@ -8,7 +8,7 @@ from sqlite3 import OperationalError
 from hashlib import md5
 from math import floor
 from string import ascii_lowercase, ascii_uppercase, digits
-from time import time
+from time import time, ctime
 
 from db import DB
 
@@ -47,6 +47,7 @@ def table_check():
         CREATE TABLE file (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename TEXT NOT NULL,
+        link TEXT,
         md5sum TEXT NOT NULL,
         expire INTEGER NOT NULL
         );
@@ -56,10 +57,10 @@ def table_check():
     except OperationalError:
         pass
 
-    
+
 def toBase62(num, b=62):
     """ calculate Base62 """
-    
+
     if b <= 0 or b > 62:
         return 0
     base = digits + ascii_lowercase + ascii_uppercase
@@ -75,7 +76,7 @@ def toBase62(num, b=62):
 
 def toBase10(num, b=62):
     """ reverse Base62 """
-    
+
     base = digits + ascii_lowercase + ascii_uppercase
     limit = len(num)
     res = 0
@@ -86,13 +87,13 @@ def toBase10(num, b=62):
 
 def calc_md5(fname):
     """ calculate md5sum of the uploaded file """
-    
+
     hash_md5 = md5()
     with open(fname, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
-    
+
 
 def file_exists(md5sum):
     """ checks if the file exists in the database by md5sum """
@@ -101,11 +102,11 @@ def file_exists(md5sum):
     if res.fetchone() is None:
         return False
     return True
-        
+
 
 def shorten_filename(fname, md5sum, expire):
     """ generates shortened filename """
-    
+
     res = db.query("""
                    INSERT INTO file (filename, md5sum, expire)
                    VALUES (?,?,?)
@@ -113,6 +114,9 @@ def shorten_filename(fname, md5sum, expire):
                    [base64.b64encode(fname.encode("UTF-8")), md5sum, expire])
     encoded_string = toBase62(res.lastrowid)
 
+    db.query("UPDATE file SET link = '{link}' WHERE id = {id}".format(
+        link=encoded_string, id=res.lastrowid
+    ))
     return host + encoded_string
 
 
@@ -142,13 +146,23 @@ def upload_file():
 
             # calculate md5sum
             md5sum = calc_md5(filename)
-            
+
             new_fname = os.path.join(app.config['UPLOAD_FOLDER'], md5sum)
 
             # check if file exists by hash
             if file_exists(md5sum):
                 os.remove(filename)
-                return 'file exists'
+                res = db.query("""
+                               SELECT link, expire FROM file
+                               WHERE md5sum = ?
+                               """, [md5sum])
+
+                link, expire = res.fetchone()
+                expire = ctime(int(expire))
+                output = "File exists:\n" + host + str(link)
+                output = output + "\nUntil: " + expire
+
+                return output
 
             # rename tmp file
             os.rename(filename, new_fname)
@@ -162,7 +176,7 @@ def upload_file():
             # calculate expiration time
             from datetime import datetime, timedelta
             expire = int((datetime.now() + timedelta(days=days)).timestamp())
-            
+
             return shorten_filename(fname, md5sum, expire)
 
     return 'upload file'
