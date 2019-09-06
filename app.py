@@ -1,7 +1,6 @@
 import os
 from flask import Flask, request, send_file
 from werkzeug.utils import secure_filename
-import json
 import base64
 from sqlite3 import OperationalError
 
@@ -11,29 +10,15 @@ from string import ascii_lowercase, ascii_uppercase, digits
 from time import time, ctime
 
 from db import DB
-
+from settings import get_secret
 
 app = Flask(__name__)
 BASE_DIR = '/'
 
-DEBUG = True
+DEBUG = False
 PORT = 5000
 
 db = DB("pastebin.db")  # FIXME
-
-
-with open('secrets.json') as f:
-    """ parse configuration file """
-    secrets = json.loads(f.read())
-
-    def get_secret(setting, secrets=secrets):
-        """ get the secret variable or return explicit exception. """
-        try:
-            return secrets[setting]
-        except KeyError:
-            error_msg = 'Set the {0} environment variable'.format(setting)
-            print(error_msg)
-
 
 SECRET_KEY = get_secret('SECRET_KEY')
 app.config['UPLOAD_FOLDER'] = get_secret('UPLOAD_FOLDER')
@@ -185,12 +170,13 @@ def upload_file():
     return 'upload file'
 
 
-@app.route('/<short_fname>')
-def redirect_short_fname(short_fname):
+@app.route('/<string:short_fname>')
+def redirect_short_fname(short_fname): 
+
     decoded = toBase10(short_fname)
 
-    res = db.query('SELECT filename, md5sum FROM file WHERE id=?',
-                   [decoded])
+    res = db.query('SELECT filename, md5sum FROM file WHERE id={id}',
+                   format(int(decoded)))
     try:
         short = res.fetchone()
         if short is not None:

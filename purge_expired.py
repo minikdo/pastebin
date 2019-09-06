@@ -2,6 +2,7 @@
 
 import os
 from datetime import datetime
+from settings import BASE_DIR
 from db import DB
 
 
@@ -27,5 +28,5 @@ def expired():
 
 if __name__ == '__main__':
     now = int(datetime.now().timestamp())
-    db = DB("pastebin.db")
+    db = DB(os.path.join(BASE_DIR, "pastebin.db"))
     expired()
