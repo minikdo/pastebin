@@ -5,8 +5,6 @@ import base64
 from sqlite3 import OperationalError
 
 from hashlib import md5
-from math import floor
-from string import ascii_lowercase, ascii_uppercase, digits
 from time import time, ctime
 
 from db import DB
@@ -46,33 +44,6 @@ def table_check():
 table_check()  # FIXME
 
 
-def toBase62(num, b=62):
-    """ calculate Base62 """
-
-    if b <= 0 or b > 62:
-        return 0
-    base = digits + ascii_lowercase + ascii_uppercase
-    r = num % b
-    res = base[r]
-    q = floor(num / b)
-    while q:
-        r = q % b
-        q = floor(q / b)
-        res = base[int(r)] + res
-    return res
-
-
-def toBase10(num, b=62):
-    """ reverse Base62 """
-
-    base = digits + ascii_lowercase + ascii_uppercase
-    limit = len(num)
-    res = 0
-    for i in range(limit):
-        res = b * res + base.find(num[i])
-    return res
-
-
 def calc_md5(fname):
     """ calculate md5sum of the uploaded file """
 
@@ -90,22 +61,6 @@ def file_exists(md5sum):
     if res.fetchone() is None:
         return False
     return True
-
-
-def shorten_filename(fname, md5sum, expire):
-    """ generates shortened filename """
-
-    res = db.query("""
-                   INSERT INTO file (filename, md5sum, expire)
-                   VALUES (?,?,?)
-                   """,
-                   [base64.b64encode(fname.encode("UTF-8")), md5sum, expire])
-    encoded_string = toBase62(res.lastrowid)
-
-    db.query("UPDATE file SET link = '{link}' WHERE id = {id}".format(
-        link=encoded_string, id=res.lastrowid
-    ))
-    return host + encoded_string
 
 
 @app.route('/' + SECRET_KEY + '/', methods=['GET', 'POST'])
@@ -165,31 +120,34 @@ def upload_file():
             from datetime import datetime, timedelta
             expire = int((datetime.now() + timedelta(days=days)).timestamp())
 
-            return shorten_filename(fname, md5sum, expire)
+            # create url token
+            from secrets import token_urlsafe
+            link = token_urlsafe(8)
 
-    return 'upload file'
+            res = db.query('''INSERT INTO file (filename, link, md5sum, expire)
+                           VALUES (?,?,?,?)''',
+                           [fname, link, md5sum, expire])
+
+            return host + link
+
+    return 'upload a file'
 
 
-@app.route('/<string:short_fname>')
-def redirect_short_fname(short_fname): 
+@app.route('/<string:link>')
+def download_file(link):
 
-    decoded = toBase10(short_fname)
+    q = db.query('SELECT filename, md5sum FROM file WHERE link=?',
+                 (link,))
 
-    res = db.query('SELECT filename, md5sum FROM file WHERE id={id}',
-                   format(int(decoded)))
-    try:
-        short = res.fetchone()
-        if short is not None:
-            fname = base64.b64decode(short[0])
-        else:
-            return 'link does not exist'
-    except Exception as e:
-        print(e)
+    res = q.fetchone()
 
-    fname2 = str(fname, "utf-8")
+    if res is None:
+        return 'no file'
+    else:
+        filename, md5sum = res
 
-    return send_file('uploads/' + short[1], attachment_filename=fname2,
-                     as_attachment=True)
+        return send_file('uploads/' + md5sum, attachment_filename=filename,
+                         as_attachment=True)
 
 
 if __name__ == "__main__":
