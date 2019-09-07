@@ -14,3 +14,11 @@ with open('secrets.json') as f:
         except KeyError:
             error_msg = 'Set the {0} environment variable'.format(setting)
             print(error_msg)
+
+SECRET_KEY = get_secret('SECRET_KEY')
+HOST = get_secret('HOST')
+UPLOAD_FOLDER = os.path.join(BASE_DIR, get_secret('UPLOAD_FOLDER'))
+MAX_CONTENT_MB = get_secret('MAX_CONTENT_MB')
+
+# development
+PORT = 5000

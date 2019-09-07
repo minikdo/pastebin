@@ -7,24 +7,19 @@ from hashlib import md5
 from time import time, ctime
 
 from db import DB
-from settings import get_secret
+from settings import (BASE_DIR, SECRET_KEY, UPLOAD_FOLDER,
+                      MAX_CONTENT_MB, HOST, PORT)
 
 app = Flask(__name__)
-BASE_DIR = '/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_MB * 1024 * 1024
 
-DEBUG = False
-PORT = 5000
-
-db = DB("pastebin.db")  # FIXME
-
-SECRET_KEY = get_secret('SECRET_KEY')
-app.config['UPLOAD_FOLDER'] = get_secret('UPLOAD_FOLDER')
-app.config['MAX_CONTENT_LENGTH'] = get_secret('MAX_CONTENT_MB')\
-                                   * 1024 * 1024
-host = get_secret('HOST')
+db = DB("pastebin.db")  # FIXME: for production
 
 
 def table_check():
+    """ create db table """
+
     create_table = """
         CREATE TABLE file (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +35,7 @@ def table_check():
         pass
 
 
-table_check()  # FIXME
+table_check()  # FIXME: for production
 
 
 def calc_md5(fname):
@@ -101,7 +96,7 @@ def upload_file():
 
                 link, expire = res.fetchone()
                 expire = ctime(int(expire))
-                output = "File exists:\n" + host + str(link)
+                output = "File exists:\n" + HOST + str(link)
                 output = output + "\nUntil: " + expire
 
                 return output
@@ -127,7 +122,7 @@ def upload_file():
                            VALUES (?,?,?,?)''',
                            [fname, link, md5sum, expire])
 
-            return host + link
+            return HOST + link
 
     return 'upload a file'
 
@@ -145,16 +140,17 @@ def download_file(link):
     else:
         filename, md5sum = res
 
-        return send_file('uploads/' + md5sum, attachment_filename=filename,
+        return send_file(os.path.join(BASE_DIR, 'uploads', md5sum),
+                         attachment_filename=filename,
                          as_attachment=True)
 
 
 if __name__ == "__main__":
     # create db connection instance
-    db = DB("pastebin.db")
+    db = DB(os.path.join(BASE_DIR, "pastebin.db"))
 
     # checks whether database table is created or not
     table_check()
 
     # run app
-    app.run(port=PORT, debug=DEBUG)
+    app.run(port=PORT, debug=True)
