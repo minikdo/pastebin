@@ -1,7 +1,6 @@
 import os
 from flask import Flask, request, send_file
 from werkzeug.utils import secure_filename
-import base64
 from sqlite3 import OperationalError
 
 from hashlib import md5
