@@ -3,7 +3,7 @@
 set -e
 
 display_usage() {
-    echo "Usage: $(basename "$0") <file> [expire_days]"
+    echo "Usage: $(basename "$0") [-f] <file> [expire_days]"
     } 
 
 if [[ $# < 1 ]]; then
