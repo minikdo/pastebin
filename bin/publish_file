@@ -23,8 +23,16 @@ fi
 
 FILE=$1
 EXPIRE=$2
+FORCE=0
 TMPFILE=
 URL=http://localhost:5000/
+
+# FIXME
+if [ $1 == '-f' ]; then
+    FORCE=1
+    FILE=$2
+    EXPIRE=$3
+fi
 
 if [ -p /dev/stdin ]; then
     TMPFILE=$(mktemp -p /tmp publish.XXXXXXX)
@@ -38,6 +46,7 @@ fi
 
 curl -X POST -F file=@${FILE} \
      -F expire=${EXPIRE} \
+     -F force=${FORCE} \
      ${URL}${MY_PASTEBIN_KEY}/
 
 if [ -p /dev/stdin ] && [ -e $TMPFILE ]; then

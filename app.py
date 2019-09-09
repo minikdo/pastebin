@@ -86,8 +86,11 @@ def upload_file():
 
             new_fname = os.path.join(app.config['UPLOAD_FOLDER'], md5sum)
 
+            force = request.form.get('force', 0)
+            force = bool(int(force))
+
             # check if file exists by hash
-            if file_exists(md5sum):
+            if file_exists(md5sum) and not force:
                 os.remove(filename)
                 res = db.query("""
                                SELECT link, expire FROM file
