@@ -89,20 +89,25 @@ def upload_file():
             force = request.form.get('force', 0)
             force = bool(int(force))
 
-            # check if file exists by hash
+            # check if file exists by hash and print out existing files
             if file_exists(md5sum) and not force:
                 os.remove(filename)
                 res = db.query("""
-                               SELECT link, expire FROM file
+                               SELECT id, link, filename, expire FROM file
                                WHERE md5sum = ?
                                """, [md5sum])
 
-                link, expire = res.fetchone()
-                expire = ctime(int(expire))
-                output = "File exists:\n" + HOST + str(link)
-                output = output + "\nUntil: " + expire
+                rows = res.fetchall()
+                output = []
 
-                return output
+                for row in rows:
+                    output.append((row[0], HOST + row[1], row[2],
+                                   ctime(row[3])))
+
+                from tabulate import tabulate
+                headers = ['id', 'url', 'filename', 'expiration time']
+
+                return f'{tabulate(output, headers=headers)}'
 
             # rename tmp file
             os.rename(filename, new_fname)
