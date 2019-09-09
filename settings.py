@@ -3,7 +3,7 @@ import json
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # noqa
 
-with open('secrets.json') as f:
+with open(os.path.join(BASE_DIR, 'secrets.json')) as f:
     """ parse configuration file """
     secrets = json.loads(f.read())
 
