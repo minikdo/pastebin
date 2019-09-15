@@ -5,6 +5,7 @@ from sqlite3 import OperationalError
 
 from hashlib import md5
 from time import time, ctime
+from urllib.parse import urljoin
 
 from db import DB
 from settings import (BASE_DIR, SECRET_KEY, UPLOAD_FOLDER,
@@ -57,7 +58,7 @@ def file_exists(md5sum):
     return True
 
 
-@app.route('/' + SECRET_KEY + '/', methods=['GET', 'POST'])
+@app.route('/' + SECRET_KEY + '/', methods=['POST'])
 def upload_file():
     if request.method == 'POST':
         # check if the post request has the file part
@@ -101,13 +102,13 @@ def upload_file():
                 output = []
 
                 for row in rows:
-                    output.append((row[0], HOST + row[1], row[2],
+                    output.append((row[0], urljoin(HOST, row[1]), row[2],
                                    ctime(row[3])))
 
                 from tabulate import tabulate
                 headers = ['id', 'url', 'filename', 'expiration time']
 
-                return f'{tabulate(output, headers=headers)}'
+                return f'{tabulate(output, headers=headers)}', 409  # Conflict
 
             # rename tmp file
             os.rename(filename, new_fname)
@@ -130,7 +131,7 @@ def upload_file():
                            VALUES (?,?,?,?)''',
                            [fname, link, md5sum, expire])
 
-            return HOST + link
+            return urljoin(HOST, link)
 
     return 'upload a file'
 
@@ -144,7 +145,7 @@ def download_file(link):
     res = q.fetchone()
 
     if res is None:
-        return 'no file'
+        return '404: no file', 404, {'Content-Type': 'text/plain'}
     else:
         filename, md5sum = res
 
