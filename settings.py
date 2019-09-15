@@ -25,7 +25,7 @@ def get_secret(setting, secrets=secrets):
 
 
 SECRET_KEY = get_secret('SECRET_KEY')
-HOST = get_secret('HOST') or "http://localhost:5000"
+HOST = get_secret('HOST')
 UPLOAD_FOLDER = os.path.join(BASE_DIR, get_secret('UPLOAD_FOLDER'))
 MAX_CONTENT_MB = get_secret('MAX_CONTENT_MB')
 
