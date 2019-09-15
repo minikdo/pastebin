@@ -63,14 +63,14 @@ def upload_file():
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
-            return 'no file part'
+            return 'no file part', 400  # HTTP Bad Request
 
         file = request.files['file']
 
         # if user does not select file, browser also
         # submit an empty part without filename
         if file.filename == '':
-            return 'no selected file'
+            return 'no selected file', 400  # HTTP Bad Request
 
         # process file and insert db record
         if file:
