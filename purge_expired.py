@@ -8,10 +8,14 @@ from db import DB
 
 def remove_file(md5sum):
     try:
-        os.remove(os.path.join('uploads', md5sum))
+        os.remove(os.path.join(BASE_DIR, 'uploads', md5sum))
     except FileNotFoundError as e:
         print(e)
-    finally:
+        exit(1)
+    except Exception as e:
+        print(e)
+        exit(1)
+    else:
         db.query("DELETE FROM file WHERE md5sum = ?", (md5sum,))
 
 
