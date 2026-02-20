@@ -150,7 +150,7 @@ def download_file(link):
         filename, md5sum = res
 
         return send_file(os.path.join(BASE_DIR, 'uploads', md5sum),
-                         attachment_filename=filename,
+                         download_name=filename,
                          as_attachment=True)
 
 
